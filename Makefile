@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help proto start stop purge deploy-tag delete-tag
+.PHONY: help proto start stop purge deploy-tag delete-tag clone
 
 help:
 	@echo "📋 Available commands (LOCAL DEVELOPMENT):"
@@ -13,6 +13,7 @@ help:
 	@echo ""
 	@echo "  🛠️  UTILIDADES:"
 	@echo "  make proto            		- Generate protobuf code"
+	@echo "  make clone            		- Clone service template replacing golden/goldens"
 	@echo "  make destroy          		- Remove artifacts and stop PostgreSQL"
 	@echo ""
 	@echo "  ☸️  KUBERNETES (deployment/):"
@@ -37,6 +38,9 @@ deploy-tag:
 
 delete-tag:
 	bash bin/app/delete-tag.sh $(filter-out $@,$(MAKECMDGOALS))
+
+clone:
+	bash bin/app/clone.sh
 
 test:
 	go test -count=1 -cover ./... $(filter-out $@,$(MAKECMDGOALS))

@@ -4,6 +4,8 @@ WORKDIR /build
 
 COPY go.* ./
 RUN go mod download
+RUN go mod tidy
+RUN make proto
 
 COPY . .
 

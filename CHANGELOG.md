@@ -1,3 +1,9 @@
+## v0.4.1 (2026-03-06)
+
+### 🔧 Chores
+
+- local working tree changes: .github/workflows/secured-publish.yaml, bin/app/proto.sh ([`local`])
+
 ## v0.4.0 (2026-03-06)
 
 ### 🔧 Chores

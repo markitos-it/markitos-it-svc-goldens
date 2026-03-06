@@ -5,8 +5,17 @@ echo "== protoc version =="
 protoc --version
 
 echo "== include dirs check =="
-ls -la /usr/include/google/protobuf/timestamp.proto || true
-ls -la /usr/local/include/google/protobuf/timestamp.proto || true
+if [ -f /usr/include/google/protobuf/timestamp.proto ]; then
+  ls -la /usr/include/google/protobuf/timestamp.proto
+else
+  echo "== /usr/include/google/protobuf/timestamp.proto not found =="
+fi
+
+if [ -f /usr/local/include/google/protobuf/timestamp.proto ]; then
+  ls -la /usr/local/include/google/protobuf/timestamp.proto
+else
+  echo "== /usr/local/include/google/protobuf/timestamp.proto not found =="
+fi
 
 echo "== generating protobuf go files =="
 protoc -I. -I/usr/include -I/usr/local/include \

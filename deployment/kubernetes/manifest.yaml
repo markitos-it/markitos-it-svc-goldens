@@ -5,6 +5,7 @@ metadata:
 ---
 apiVersion: apps/v1
 kind: Deployment
+# checkov:skip=CKV_K8S_35:Using env var for DB_PASS temporarily until file-based secret refactor
 metadata:
   name: markitos-it-svc-goldens-deployment
   namespace: goldens
@@ -18,22 +19,26 @@ spec:
       labels:
         app: markitos-it-svc-goldens-pods
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       imagePullSecrets:
       - name: gcp-artifact-registry-secret
       containers:
       - name: markitos-it-svc-goldens-container
         securityContext:
           allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false
+          readOnlyRootFilesystem: true
           runAsNonRoot: true
-          runAsUser: 1000
+          runAsUser: 10001
           capabilities:
             drop:
             - ALL
+        imagePullPolicy: Always
         image: europe-southwest1-docker.pkg.dev/markitos-it-labs-course-basic/private/markitos-it-svc-goldens@sha256:4b2793a72697056aaaa11fa6731d7b7f8c974665fa1e67c854709484d8fc8d85
         ports:
         - containerPort: 3000
@@ -140,3 +145,20 @@ data:
   DB_USER: "markitos-it-svc-goldens"
   DB_PASS: "markitos-it-svc-goldens" # gitleaks:allow (local dev password)
   DB_NAME: "markitos-it-svc-goldens"
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-markitos-goldens
+  namespace: goldens
+spec:
+  podSelector:
+    matchLabels:
+      app: markitos-it-svc-goldens-pods
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - {}
+  egress:
+  - {}

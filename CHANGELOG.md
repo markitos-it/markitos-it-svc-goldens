@@ -1,5 +1,11 @@
 ## v0.1.0 (2026-03-06)
 
+### 🔧 Chores
+
+- local working tree changes: .github/workflows/appsec.yaml.off, .github/workflows/publish-image.yaml.off ([`local`])
+
+## v0.1.0 (2026-03-06)
+
 ### ✨ Features
 
 - (release) release v0.4.0: update .github/workflows/secured-publish.yaml, cmd/app/main.go and 1 more files ([`ded777a`])

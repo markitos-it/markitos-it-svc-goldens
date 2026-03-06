@@ -1,3 +1,9 @@
+## v0.4.0 (2026-03-06)
+
+### 🔧 Chores
+
+- local working tree changes: .github/workflows/secured-publish.yaml, cmd/app/main.go, docker-compose.yml ([`local`])
+
 ## v0.3.5 (2026-03-06)
 
 ### 🔧 Chores

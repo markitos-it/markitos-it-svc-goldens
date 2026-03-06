@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	grpcserver "markitos-it-svc-goldens/internal/infrastructure/grpc"
@@ -25,6 +26,14 @@ func getEnvRequired(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
 		log.Fatalf("❌ Required environment variable %s is not set", key)
+	}
+	return value
+}
+
+func getEnvOrDefault(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
 	}
 	return value
 }
@@ -50,11 +59,21 @@ func main() {
 		log.Fatalf("❌ Failed to listen: %v", err)
 	}
 
-	creds, err := credentials.NewServerTLSFromFile("certs/server.crt", "certs/server.key")
-	if err != nil {
-		log.Fatalf("tls error: %v", err)
+	tlsEnabled := strings.EqualFold(getEnvOrDefault("GRPC_TLS_ENABLED", "false"), "true")
+	var grpcServer *grpc.Server
+	if tlsEnabled {
+		certFile := getEnvOrDefault("GRPC_TLS_CERT_FILE", "certs/server.crt")
+		keyFile := getEnvOrDefault("GRPC_TLS_KEY_FILE", "certs/server.key")
+		creds, tlsErr := credentials.NewServerTLSFromFile(certFile, keyFile)
+		if tlsErr != nil {
+			log.Fatalf("tls error: %v", tlsErr)
+		}
+		grpcServer = grpc.NewServer(grpc.Creds(creds))
+		log.Printf("🔐 gRPC TLS enabled using cert=%s key=%s", certFile, keyFile)
+	} else {
+		grpcServer = grpc.NewServer()
+		log.Println("⚠️  gRPC TLS disabled (set GRPC_TLS_ENABLED=true to enable TLS)")
 	}
-	grpcServer := grpc.NewServer(grpc.Creds(creds))
 
 	pb.RegisterGoldenServiceServer(grpcServer, grpcserver.NewGoldenServer(docService))
 	reflection.Register(grpcServer)

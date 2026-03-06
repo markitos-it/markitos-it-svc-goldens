@@ -5,7 +5,6 @@ services:
     command: ["postgres", "-p", "${POSTGRES_PORT:-55432}"]
     environment:
       POSTGRES_USER: markitos-it-svc-goldens
-      # checkov:skip=CKV_SECRET_6:Password for local dev only
       POSTGRES_PASSWORD: markitos-it-svc-goldens
       POSTGRES_DB: markitos-it-svc-goldens
     ports:
@@ -23,10 +22,10 @@ services:
     container_name: markitos-it-svc-goldens
     environment:
       GRPC_PORT: "3000"
+      GRPC_TLS_ENABLED: "false"
       DB_HOST: markitos-it-svc-goldens-postgres
       DB_PORT: "${POSTGRES_PORT:-55432}"
       DB_USER: markitos-it-svc-goldens
-      # checkov:skip=CKV_SECRET_6:Password for local dev only
       DB_PASS: markitos-it-svc-goldens
       DB_NAME: markitos-it-svc-goldens
     ports:

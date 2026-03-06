@@ -10,14 +10,12 @@ data:
 
 ---
 apiVersion: v1
-# gitleaks:allow
 kind: Secret
 metadata:
   name: postgres-secret
   namespace: default
 type: Opaque
 data:
-  # checkov:skip=CKV_SECRET_6:Base64 encoded password for local dev only
   DB_PASS: "cG9zdGdyZXMxMjM="
 
 ---

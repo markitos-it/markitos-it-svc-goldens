@@ -5,7 +5,7 @@ ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GO111MODULE=on
 
-RUN apk add --no-cache make git protobuf
+RUN apk add --no-cache make git protobuf bash
 
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest \
  && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest

@@ -1,3 +1,9 @@
+## v0.1.3 (2026-03-06)
+
+### 🔧 Chores
+
+- local working tree changes: Dockerfile ([`local`])
+
 ## v0.1.2 (2026-03-06)
 
 ### 🔧 Chores

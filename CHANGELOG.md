@@ -1,3 +1,9 @@
+## v0.2.0 (2026-03-06)
+
+### ✨ Features
+
+- (workflows) remove deprecated appsec and publish-image workflows; add secured-publish workflow for enhanced security ([`78305d2`])
+
 ## v0.1.0 (2026-03-06)
 
 ### ✨ Features

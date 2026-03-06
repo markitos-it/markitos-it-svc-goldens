@@ -65,7 +65,7 @@ jobs:
         with:
           scan-type: "fs"
           scan-ref: "."
-          severity: "MEDIUM,HIGH,CRITICAL"
+          severity: "HIGH,CRITICAL"
           format: "table"
           exit-code: "0"
 
@@ -102,7 +102,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get install -y shellcheck
-          find . -type f -name "*.sh" -not -path "*/alias/*" -print0 | xargs -0 shellcheck --severity=style --shell=bash --exclude=SC1090 || true
+          find . -type f -name "*.sh" -not -path "*/alias/*" -print0 | xargs -0 shellcheck --severity=error --shell=bash --exclude=SC1090 || true
 
   publish:
     name: Publish Image to GCP

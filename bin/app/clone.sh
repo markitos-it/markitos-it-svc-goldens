@@ -17,7 +17,7 @@ fi
 
 SINGULAR_LOWER="$(echo "$SINGULAR_INPUT" | tr '[:upper:]' '[:lower:]')"
 PLURAL_LOWER="$(echo "$PLURAL_INPUT" | tr '[:upper:]' '[:lower:]')"
-DEFAULT_TARGET="../markitos-it-svc-${SINGULAR_LOWER}"
+DEFAULT_TARGET="../markitos-it-svc-${PLURAL_LOWER}"
 
 read -rp "Ruta destino [${DEFAULT_TARGET}]: " TARGET_DIR_INPUT
 TARGET_DIR_INPUT="$(echo "$TARGET_DIR_INPUT" | xargs)"

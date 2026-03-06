@@ -1,3 +1,17 @@
+## v0.3.0 (2026-03-06)
+
+### ✨ Features
+
+- add cleanup function for temporary test database in cover, test, and test-v scripts ([`b39f410`])
+
+### ♻️  Refactor
+
+- (release) testing like a boss :P ([`d049459`])
+
+### 📦 Other
+
+- testing and tuning ([`8d0d4bd`])
+
 ## v0.2.2 (2026-03-06)
 
 ### 🔧 Chores

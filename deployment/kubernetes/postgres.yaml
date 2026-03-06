@@ -21,9 +21,6 @@ data:
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-# checkov:skip=CKV_K8S_35:Postgres image expects POSTGRES_PASSWORD env var
-# checkov:skip=CKV_K8S_22:Postgres needs writable root paths at runtime
-# checkov:skip=CKV_K8S_43:Digest pin for postgres image is pending image promotion workflow
 metadata:
   name: postgres
   namespace: goldens

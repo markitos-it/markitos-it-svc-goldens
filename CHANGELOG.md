@@ -1,3 +1,9 @@
+## v0.3.0 (2026-03-06)
+
+### 🔧 Chores
+
+- local working tree changes: .github/workflows/secured-publish.yaml, deployment/kubernetes/manifest.yaml, deployment/kubernetes/postgres.yaml ([`local`])
+
 ## v0.2.4 (2026-03-06)
 
 ### 🔧 Chores

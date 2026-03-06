@@ -16,98 +16,86 @@ permissions:
   contents: read
 
 jobs:
-  scan:
-    name: Secrets Scan
+  snyk-code:
+    name: Snyk Code Scan
     runs-on: ubuntu-latest
     concurrency:
-      group: appsec-${{ github.ref }}
+      group: snyk-code-${{ github.ref }}
       cancel-in-progress: true
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Gitleaks Scan
+      - name: Run Snyk Code
+        uses: snyk/actions/golang@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test
+          args: --severity-threshold=high
+
+  snyk-oss:
+    name: Snyk Dependency Scan
+    runs-on: ubuntu-latest
+    concurrency:
+      group: snyk-oss-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk OSS
+        uses: snyk/actions/golang@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --severity-threshold=high
+
+  snyk-iac:
+    name: Snyk IaC Scan
+    runs-on: ubuntu-latest
+    concurrency:
+      group: snyk-iac-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk IaC
+        uses: snyk/actions/iac@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --severity-threshold=high deployment/kubernetes
+
+  snyk-container:
+    name: Snyk Container Scan
+    runs-on: ubuntu-latest
+    concurrency:
+      group: snyk-container-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build local image for scan
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/repo" \
-            ghcr.io/gitleaks/gitleaks:latest \
-            detect --source="/repo" --no-git --redact --no-banner --verbose
+          docker build -t local/${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
-  sast:
-    name: SAST Analysis
-    runs-on: ubuntu-latest
-    concurrency:
-      group: sast-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Semgrep Scan
-        uses: returntocorp/semgrep-action@v1
+      - name: Run Snyk Container
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          config: auto
-
-  dependencies:
-    name: Dependency Scanning
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deps-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Trivy Dependency Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          severity: "HIGH,CRITICAL"
-          format: "table"
-          exit-code: "0"
-
-  infrastructure:
-    name: Infrastructure as Code Scanning
-    runs-on: ubuntu-latest
-    concurrency:
-      group: iac-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Checkov IaC Scan
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: .
-          quiet: true
-          compact: true
-          framework: kubernetes,dockerfile
-          output_format: cli
-
-  linting:
-    name: Bash Linting
-    runs-on: ubuntu-latest
-    concurrency:
-      group: lint-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: ShellCheck Scan
-        shell: bash
-        run: |
-          sudo apt-get install -y shellcheck
-          find . -type f -name "*.sh" -not -path "*/alias/*" -print0 | xargs -0 shellcheck --severity=error --shell=bash --exclude=SC1090 || true
+          image: local/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          args: --severity-threshold=high
 
   publish:
     name: Publish Image to GCP
     runs-on: ubuntu-latest
-    needs: [scan, sast, dependencies, infrastructure, linting]
+    needs: [snyk-code, snyk-oss, snyk-iac, snyk-container]
     if: ${{ success() }}
     permissions:
       contents: read

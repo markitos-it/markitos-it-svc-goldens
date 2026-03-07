@@ -139,3 +139,56 @@ func TestGoldenServer_GetGoldenById_Error(t *testing.T) {
 		t.Fatalf("expected NotFound, got %v", status.Code(err))
 	}
 }
+
+// TestGoldenServer_GetGoldenById_AllFieldsMapped verifies that every field of the
+// domain.Golden is correctly mapped to the corresponding proto field.
+func TestGoldenServer_GetGoldenById_AllFieldsMapped(t *testing.T) {
+	now := time.Date(2026, 3, 6, 12, 0, 0, 0, time.UTC)
+	doc := &domain.Golden{
+		ID:          "id-fields",
+		Title:       "Test Title",
+		Description: "Test Description",
+		Category:    "TestCat",
+		Tags:        []string{"tag1", "tag2"},
+		UpdatedAt:   now,
+		ContentB64:  "Y29udGVudA==",
+		CoverImage:  "https://example.com/cover.png",
+	}
+	s := NewGoldenServer(services.NewGoldenService(&stubRepo{doc: doc}))
+
+	resp, err := s.GetGoldenById(context.Background(), &pb.GetGoldenByIdRequest{Id: doc.ID})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	g := resp.Golden
+
+	if g.Id != doc.ID {
+		t.Errorf("Id: want %q, got %q", doc.ID, g.Id)
+	}
+	if g.Title != doc.Title {
+		t.Errorf("Title: want %q, got %q", doc.Title, g.Title)
+	}
+	if g.Description != doc.Description {
+		t.Errorf("Description: want %q, got %q", doc.Description, g.Description)
+	}
+	if g.Category != doc.Category {
+		t.Errorf("Category: want %q, got %q", doc.Category, g.Category)
+	}
+	if len(g.Tags) != len(doc.Tags) {
+		t.Fatalf("Tags length: want %d, got %d", len(doc.Tags), len(g.Tags))
+	}
+	for i, tag := range doc.Tags {
+		if g.Tags[i] != tag {
+			t.Errorf("Tags[%d]: want %q, got %q", i, tag, g.Tags[i])
+		}
+	}
+	if !g.UpdatedAt.AsTime().Equal(doc.UpdatedAt) {
+		t.Errorf("UpdatedAt: want %v, got %v", doc.UpdatedAt, g.UpdatedAt.AsTime())
+	}
+	if g.ContentB64 != doc.ContentB64 {
+		t.Errorf("ContentB64: want %q, got %q", doc.ContentB64, g.ContentB64)
+	}
+	if g.CoverImage != doc.CoverImage {
+		t.Errorf("CoverImage: want %q, got %q", doc.CoverImage, g.CoverImage)
+	}
+}

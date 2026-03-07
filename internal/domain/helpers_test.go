@@ -39,6 +39,7 @@ func TestHelperRandomAlphaPrefix_RandErrorPath(t *testing.T) {
 
 func FuzzHelperRandomAlphaPrefix(f *testing.F) {
 	f.Add(0)
+	f.Add(1)
 	f.Add(5)
 	f.Add(100)
 
@@ -49,7 +50,7 @@ func FuzzHelperRandomAlphaPrefix(f *testing.F) {
 
 		got := HelperRandomAlphaPrefix(t, length)
 		if len(got) != length {
-			t.Fatalf("Esperaba longitud %d, obtuve %d", length, len(got))
+			t.Fatalf("expected length %d, got %d", length, len(got))
 		}
 	})
 }

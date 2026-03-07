@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"markitos-it-svc-goldens/internal/domain"
 	"os"
-	"strings"
+	"reflect"
 	"testing"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 func helperIntegrationDB(t *testing.T) *sql.DB {
@@ -56,23 +56,11 @@ func helperInsertDocDirect(t *testing.T, db *sql.DB, doc *domain.Golden) {
 	_, err := db.Exec(
 		`INSERT INTO goldens (id, title, description, category, tags, updated_at, content_b64, cover_image)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		doc.ID, doc.Title, doc.Description, doc.Category, pqStringArray(doc.Tags), doc.UpdatedAt, doc.ContentB64, doc.CoverImage,
+		doc.ID, doc.Title, doc.Description, doc.Category, pq.Array(doc.Tags), doc.UpdatedAt, doc.ContentB64, doc.CoverImage,
 	)
 	if err != nil {
 		t.Fatalf("failed to insert test row: %v", err)
 	}
-}
-
-func pqStringArray(tags []string) interface{} {
-	if len(tags) == 0 {
-		return "{}"
-	}
-	quoted := make([]string, 0, len(tags))
-	for _, tag := range tags {
-		escaped := strings.ReplaceAll(tag, "\"", "\\\"")
-		quoted = append(quoted, fmt.Sprintf("\"%s\"", escaped))
-	}
-	return "{" + strings.Join(quoted, ",") + "}"
 }
 
 func TestGoldenRepository_InitSchema_Success_Integration(t *testing.T) {
@@ -138,6 +126,28 @@ func TestGoldenRepository_GetAll_Success_Integration(t *testing.T) {
 	if len(docs) != 1 {
 		t.Fatalf("expected 1 doc, got %d", len(docs))
 	}
+	got := docs[0]
+	if got.ID != doc.ID {
+		t.Errorf("ID: want %q, got %q", doc.ID, got.ID)
+	}
+	if got.Title != doc.Title {
+		t.Errorf("Title: want %q, got %q", doc.Title, got.Title)
+	}
+	if got.Description != doc.Description {
+		t.Errorf("Description: want %q, got %q", doc.Description, got.Description)
+	}
+	if got.Category != doc.Category {
+		t.Errorf("Category: want %q, got %q", doc.Category, got.Category)
+	}
+	if !reflect.DeepEqual(got.Tags, doc.Tags) {
+		t.Errorf("Tags: want %v, got %v", doc.Tags, got.Tags)
+	}
+	if got.ContentB64 != doc.ContentB64 {
+		t.Errorf("ContentB64: want %q, got %q", doc.ContentB64, got.ContentB64)
+	}
+	if got.CoverImage != doc.CoverImage {
+		t.Errorf("CoverImage: want %q, got %q", doc.CoverImage, got.CoverImage)
+	}
 }
 
 func TestGoldenRepository_GetByID_NotFound_Integration(t *testing.T) {
@@ -163,8 +173,32 @@ func TestGoldenRepository_GetByID_Success_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetByID() unexpected error: %v", err)
 	}
-	if got == nil || got.ID != doc.ID {
-		t.Fatalf("expected id=%s, got %+v", doc.ID, got)
+	if got == nil {
+		t.Fatal("GetByID() returned nil")
+	}
+	if got.ID != doc.ID {
+		t.Errorf("ID: want %q, got %q", doc.ID, got.ID)
+	}
+	if got.Title != doc.Title {
+		t.Errorf("Title: want %q, got %q", doc.Title, got.Title)
+	}
+	if got.Description != doc.Description {
+		t.Errorf("Description: want %q, got %q", doc.Description, got.Description)
+	}
+	if got.Category != doc.Category {
+		t.Errorf("Category: want %q, got %q", doc.Category, got.Category)
+	}
+	if !reflect.DeepEqual(got.Tags, doc.Tags) {
+		t.Errorf("Tags: want %v, got %v", doc.Tags, got.Tags)
+	}
+	if !got.UpdatedAt.Equal(doc.UpdatedAt) {
+		t.Errorf("UpdatedAt: want %v, got %v", doc.UpdatedAt, got.UpdatedAt)
+	}
+	if got.ContentB64 != doc.ContentB64 {
+		t.Errorf("ContentB64: want %q, got %q", doc.ContentB64, got.ContentB64)
+	}
+	if got.CoverImage != doc.CoverImage {
+		t.Errorf("CoverImage: want %q, got %q", doc.CoverImage, got.CoverImage)
 	}
 }
 

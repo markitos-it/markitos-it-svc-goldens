@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help proto start stop purge deploy-tag delete-tag clone test test-v cover build destroy
+.PHONY: help proto start stop purge clone test test-v cover build destroy
 
 help:
 	@echo "📋 Available commands (LOCAL DEVELOPMENT):"
@@ -19,8 +19,6 @@ help:
 	@echo "  make destroy               - Remove artifacts and stop PostgreSQL"
 	@echo ""
 	@echo "  ☸️  KUBERNETES (deployment/):"
-	@echo "  make deploy-tag <version>  - Create and push git tag (e.g., 1.2.3)"
-	@echo "  make delete-tag <version>  - Delete git tag locally and remotely"
 	@echo ""
 
 proto:
@@ -34,12 +32,6 @@ stop:
 
 destroy:
 	bash bin/app/destroy.sh
-
-deploy-tag:
-	bash bin/app/deploy-tag.sh $(filter-out $@,$(MAKECMDGOALS))
-
-delete-tag:
-	bash bin/app/delete-tag.sh $(filter-out $@,$(MAKECMDGOALS))
 
 clone:
 	bash bin/app/clone.sh

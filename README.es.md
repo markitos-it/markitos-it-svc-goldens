@@ -68,8 +68,6 @@ make build <package>   # Compilar un paquete específico
 make proto             # Generar código protobuf
 make clone             # Clonar plantilla del servicio
 make destroy           # Eliminar artefactos y detener PostgreSQL
-make deploy-tag        # Crear y push tag de git
-make delete-tag        # Eliminar tag de git
 ```
 
 ## Configuración

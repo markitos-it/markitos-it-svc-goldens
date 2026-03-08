@@ -68,8 +68,6 @@ make build <package>   # Build a specific package
 make proto             # Generate protobuf code
 make clone             # Clone service template
 make destroy           # Remove artifacts and stop PostgreSQL
-make deploy-tag        # Create and push git tag
-make delete-tag        # Delete git tag
 ```
 
 ## Configuration

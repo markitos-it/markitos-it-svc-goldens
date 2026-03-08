@@ -1,104 +1,123 @@
-#!/bin/bash
-#:[.'.']:>- ===================================================================================
-#:[.'.']:>- Marco Antonio - markitos devsecops kulture
-#:[.'.']:>- The Way of the Artisan
-#:[.'.']:>- markitos.es.info@gmail.com
-#:[.'.']:>- 🌍 https://github.com/orgs/markitos-it/repositories
-#:[.'.']:>- 🌍 https://github.com/orgs/markitos-public/repositories
-#:[.'.']:>- 📺 https://www.youtube.com/@markitos_devsecops
-#:[.'.']:>- ===================================================================================
+#!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")/../.."
-SRC_DIR="$PWD"
+#:[.'.]:>- ===================================================================================
+#:[.'.]:>- Marco Antonio - markitos devsecops kulture
+#:[.'.]:>- The Way of the Artisan
+#:[.'.]:>- markitos.es.info@gmail.com
+#:[.'.]:>- 🌍 https://github.com/orgs/markitos-it/repositories
+#:[.'.]:>- 🌍 https://github.com/orgs/markitos-public/repositories
+#:[.'.]:>- 📺 https://www.youtube.com/@markitos_devsecops
+#:[.'.]:>- ===================================================================================
 
-read -rp "Entidad en singular (ej: user): " SINGULAR_INPUT
-read -rp "Entidad en plural (ej: users): " PLURAL_INPUT
+#:[.'.]:>- Descripción:
+#:[.'.]:>- Script de configuración inicial para nuevos proyectos clonados desde la plantilla golden.
+#:[.'.]:>- Configura los puertos de PostgreSQL y del servicio gRPC en docker-compose.yml
+#:[.'.]:>- y se auto-elimina del Makefile y los READMEs tras ejecutarse.
 
-SINGULAR_INPUT="$(echo "$SINGULAR_INPUT" | xargs)"
-PLURAL_INPUT="$(echo "$PLURAL_INPUT" | xargs)"
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
-if [ -z "$SINGULAR_INPUT" ] || [ -z "$PLURAL_INPUT" ]; then
-  echo "❌ Singular y plural son obligatorios"
-  exit 1
-fi
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+PROJECT_ROOT=$(readlink -f "$SCRIPT_DIR/../..")
 
-SINGULAR_LOWER="$(echo "$SINGULAR_INPUT" | tr '[:upper:]' '[:lower:]')"
-PLURAL_LOWER="$(echo "$PLURAL_INPUT" | tr '[:upper:]' '[:lower:]')"
-DEFAULT_TARGET="../markitos-it-svc-${PLURAL_LOWER}"
+echo
+echo -e "${CYAN}🛠️  Configuración inicial del proyecto clonado${NC}"
+echo -e "${CYAN}================================================${NC}"
+echo
+echo "  Este script configurará:"
+echo "  - Puerto de PostgreSQL en docker-compose.yml"
+echo "  - Puerto local del servicio gRPC en docker-compose.yml"
+echo "  - Se auto-eliminará del Makefile y READMEs al finalizar"
+echo
 
-read -rp "Ruta destino [${DEFAULT_TARGET}]: " TARGET_DIR_INPUT
-TARGET_DIR_INPUT="$(echo "$TARGET_DIR_INPUT" | xargs)"
-TARGET_DIR="${TARGET_DIR_INPUT:-$DEFAULT_TARGET}"
+#:[.'.]:>- Solicitar puerto de PostgreSQL
+while true; do
+    echo -e "${YELLOW}➤  Puerto para PostgreSQL${NC}"
+    echo    "   (sugerido: 55433)"
+    read -r -p "   Puerto PostgreSQL [55433]: " POSTGRES_PORT
+    POSTGRES_PORT="${POSTGRES_PORT:-55433}"
 
-export SRC_DIR TARGET_DIR SINGULAR_INPUT PLURAL_INPUT
-
-to_title() {
-    local value="$1"
-    value="${value,,}"
-    echo "${value^}"
-}
-
-SINGULAR_TITLE="$(to_title "$SINGULAR_INPUT")"
-PLURAL_TITLE="$(to_title "$PLURAL_INPUT")"
-SINGULAR_UPPER="${SINGULAR_INPUT^^}"
-PLURAL_UPPER="${PLURAL_INPUT^^}"
-
-apply_replacements() {
-    local value="$1"
-    value="${value//GOLDENS/$PLURAL_UPPER}"
-    value="${value//Goldens/$PLURAL_TITLE}"
-    value="${value//goldens/$PLURAL_LOWER}"
-    value="${value//GOLDEN/$SINGULAR_UPPER}"
-    value="${value//Golden/$SINGULAR_TITLE}"
-    value="${value//golden/$SINGULAR_LOWER}"
-    echo "$value"
-}
-
-if [ -d "$TARGET_DIR" ] && [ "$(find "$TARGET_DIR" -mindepth 1 -maxdepth 1 | head -n 1)" ]; then
-    echo "❌ El destino ya existe y no está vacío: $(realpath "$TARGET_DIR")"
-    exit 1
-fi
-
-[ -d "$TARGET_DIR" ] && rmdir "$TARGET_DIR"
-
-echo "📦 Clonando desde $(realpath "$SRC_DIR") hacia $(realpath -m "$TARGET_DIR")..."
-mkdir -p "$TARGET_DIR"
-cp -a "$SRC_DIR"/. "$TARGET_DIR"/
-rm -rf "$TARGET_DIR/.git"
-
-RENAMED_PATHS=0
-while IFS= read -r -d '' PATH_ITEM; do
-    BASE_NAME="$(basename "$PATH_ITEM")"
-    DIR_NAME="$(dirname "$PATH_ITEM")"
-    NEW_BASE="$(apply_replacements "$BASE_NAME")"
-
-    if [ "$NEW_BASE" != "$BASE_NAME" ]; then
-        mv "$PATH_ITEM" "$DIR_NAME/$NEW_BASE"
-        RENAMED_PATHS=$((RENAMED_PATHS + 1))
+    if [[ "$POSTGRES_PORT" =~ ^[0-9]{1,5}$ ]] && [ "$POSTGRES_PORT" -ge 1024 ] && [ "$POSTGRES_PORT" -le 65535 ]; then
+        echo -e "   ${GREEN}✅ Puerto PostgreSQL: ${POSTGRES_PORT}${NC}"
+        break
+    else
+        echo "   ❌ Puerto inválido. Debe ser un número entre 1024 y 65535."
     fi
-done < <(find "$TARGET_DIR" -depth -mindepth 1 -print0)
+    echo
+done
 
-UPDATED_FILES=0
-while IFS= read -r -d '' FILE_ITEM; do
-    if ! grep -Iq . "$FILE_ITEM"; then
-        continue
+echo
+
+#:[.'.]:>- Solicitar puerto local del servicio gRPC
+while true; do
+    echo -e "${YELLOW}➤  Puerto local para el servicio gRPC${NC}"
+    echo    "   (sugerido: 3001)"
+    read -r -p "   Puerto servicio gRPC [3001]: " SVC_PORT
+    SVC_PORT="${SVC_PORT:-3001}"
+
+    if [[ "$SVC_PORT" =~ ^[0-9]{1,5}$ ]] && [ "$SVC_PORT" -ge 1024 ] && [ "$SVC_PORT" -le 65535 ]; then
+        echo -e "   ${GREEN}✅ Puerto servicio gRPC: ${SVC_PORT}${NC}"
+        break
+    else
+        echo "   ❌ Puerto inválido. Debe ser un número entre 1024 y 65535."
     fi
+    echo
+done
 
-    if grep -qE 'goldens|golden|Goldens|Golden|GOLDENS|GOLDEN' "$FILE_ITEM"; then
-        sed -i \
-            -e "s/GOLDENS/${PLURAL_UPPER}/g" \
-            -e "s/Goldens/${PLURAL_TITLE}/g" \
-            -e "s/goldens/${PLURAL_LOWER}/g" \
-            -e "s/GOLDEN/${SINGULAR_UPPER}/g" \
-            -e "s/Golden/${SINGULAR_TITLE}/g" \
-            -e "s/golden/${SINGULAR_LOWER}/g" \
-            "$FILE_ITEM"
-        UPDATED_FILES=$((UPDATED_FILES + 1))
+echo
+
+#:[.'.]:>- Actualizar docker-compose.yml: puerto de PostgreSQL
+DOCKER_COMPOSE="$PROJECT_ROOT/docker-compose.yml"
+
+echo -e "${CYAN}📝 Actualizando docker-compose.yml...${NC}"
+
+#:[.'.]:>- Reemplazar puerto PostgreSQL (valor por defecto 55433)
+sed -i "s/\${POSTGRES_PORT:-55433}/${POSTGRES_PORT}/g" "$DOCKER_COMPOSE"
+
+#:[.'.]:>- Reemplazar puerto del servicio (mapeo host:contenedor)
+#:[.'.]:>- Patrón: - "XXXX:3000" -> - "SVC_PORT:3000"
+sed -i 's|ports:\n.*"[0-9]*:3000"|ports:\n      - "'"$SVC_PORT"':3000"|' "$DOCKER_COMPOSE"
+#:[.'.]:>- Alternativa con perl para multilinea si sed no captura bien:
+perl -i -0pe 's|(ports:\s*\n\s*- ")[0-9]+(":3000")|${1}'"$SVC_PORT"'${2}|' "$DOCKER_COMPOSE"
+
+echo -e "   ${GREEN}✅ docker-compose.yml actualizado${NC}"
+echo "      POSTGRES_PORT  → $POSTGRES_PORT"
+echo "      SERVICE_PORT   → $SVC_PORT:3000"
+
+echo
+
+#:[.'.]:>- Auto-eliminar target 'clone' y referencia en .PHONY del Makefile
+MAKEFILE="$PROJECT_ROOT/Makefile"
+
+echo -e "${CYAN}🗑️  Limpiando Makefile (eliminando target clone)...${NC}"
+
+#:[.'.]:>- Eliminar 'clone' de la línea .PHONY
+sed -i 's/ clone//' "$MAKEFILE"
+sed -i 's/clone //' "$MAKEFILE"
+
+#:[.'.]:>- Eliminar bloque del target clone (líneas desde "clone:" hasta la siguiente línea en blanco o target)
+perl -i -0pe 's/\nclone:[^\n]*\n\tbash bin\/app\/clone\.sh\n/\n/' "$MAKEFILE"
+
+#:[.'.]:>- Eliminar línea del help que menciona make clone
+sed -i '/make clone/d' "$MAKEFILE"
+
+echo -e "   ${GREEN}✅ Makefile limpiado${NC}"
+
+echo
+
+#:[.'.]:>- Limpiar READMEs: eliminar líneas que mencionan make clone
+for readme in "$PROJECT_ROOT/README.md" "$PROJECT_ROOT/README.es.md"; do
+    if [ -f "$readme" ]; then
+        echo -e "${CYAN}🗑️  Limpiando $(basename "$readme")...${NC}"
+        sed -i '/make clone/d' "$readme"
+        echo -e "   ${GREEN}✅ $(basename "$readme") limpiado${NC}"
     fi
-done < <(find "$TARGET_DIR" -type f -print0)
+done
 
-echo "✅ Clonado completado"
-echo "📁 Destino........: $(realpath "$TARGET_DIR")"
-echo "🔁 Rutas renombradas: $RENAMED_PATHS"
-echo "📝 Archivos editados: $UPDATED_FILES"
+echo
+echo -e "${GREEN}🎉 Configuración completada.${NC}"
+echo "   Ahora puedes ejecutar: ${CYAN}make start${NC}"
+echo

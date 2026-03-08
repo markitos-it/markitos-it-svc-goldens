@@ -1,3 +1,9 @@
+## v0.4.0 (2026-03-08)
+
+### 📚 Docs
+
+- (release) release v0.4.0: update Makefile, README.es.md and 1 more files ([`f399726`])
+
 ## v0.4.0 (2026-03-07)
 
 ### 🔧 Chores

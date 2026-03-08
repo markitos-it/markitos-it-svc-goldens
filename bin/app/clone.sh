@@ -107,20 +107,28 @@ while IFS= read -r -d '' FILE_ITEM; do
     fi
 done < <(find "$TARGET_DIR" -type f -print0)
 
-TARGET_DOCKER_COMPOSE="$TARGET_DIR/docker-compose.yml"
-if [ -f "$TARGET_DOCKER_COMPOSE" ]; then
-    sed -i "s/\${POSTGRES_PORT:-55432}/${POSTGRES_PORT}/g" "$TARGET_DOCKER_COMPOSE"
-    perl -i -0pe 's|(ports:\s*\n\s*- ")[0-9]+(:3000")|${1}'"$SERVICE_PORT"'${2}|' "$TARGET_DOCKER_COMPOSE"
-fi
-
-for SVC_FILE in \
-    "$TARGET_DIR/bin/app/start.sh" \
-    "$TARGET_DIR/bin/app/test-grpc.sh" \
-    "$TARGET_DIR/bin/app/test-setup.sh"; do
-    if [ -f "$SVC_FILE" ]; then
-        sed -i "s/\b3000\b/${SERVICE_PORT}/g" "$SVC_FILE"
+# Reemplazar puertos en todos los archivos de texto del nuevo servicio
+while IFS= read -r -d '' FILE_ITEM; do
+    if ! grep -Iq . "$FILE_ITEM"; then
+        continue
     fi
-done
+    sed -i \
+        -e "s/\${POSTGRES_PORT:-55432}/${POSTGRES_PORT}/g" \
+        -e "s/\b55432\b/${POSTGRES_PORT}/g" \
+        -e "s/\b3000\b/${SERVICE_PORT}/g" \
+        "$FILE_ITEM"
+done < <(find "$TARGET_DIR" -type f -print0)
+
+# Eliminar clone.sh y target clone del Makefile en el nuevo servicio
+rm -f "$TARGET_DIR/bin/app/clone.sh"
+
+TARGET_MAKEFILE="$TARGET_DIR/Makefile"
+if [ -f "$TARGET_MAKEFILE" ]; then
+    sed -i \
+        -e 's/ clone//' \
+        -e '/^clone:$/,/^$/d' \
+        "$TARGET_MAKEFILE"
+fi
 
 echo "Clonado completado"
 echo "Destino.............: $(realpath "$TARGET_DIR")"
